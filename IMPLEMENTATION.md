@@ -45,3 +45,37 @@ Not quite yet, the file still needs to be implemented to be compatible with and 
 I used ChatGPT to help me generate the index.html file. The code was slightly modified from what was given, just changing variable names to reflect our context. 
 
 Prompt used: "I am creating a college basketball web application that displays college basketball statistics from different API data sources. Could you help me start on the frontend by creating an index.html file for the home page of the web application"
+
+# Sharlette Vijoy
+
+## Features Implemented
+
+### Backend API Endpoints
+Files:
+backend/app.py
+
+The backend is built using Flask and serves as the bridge between the frontend and the data adapter layer. It exposes six REST API
+endpoints that the frontend can call to retrieve live basketball data from the NBA API adapter.
+
+Four REST API endpoints were added to the Flask backend to expose player and team data to the frontend:
+
+- GET /api/player/<name> — accepts a player name in the URL and returns that player's stats by calling get_player_stats() on the data service.
+- GET /api/team/<name> — accepts a team name in the URL and returns that team's stats by calling get_team_stats().
+- GET /api/compare/players?player1=X&player2=Y — accepts two player names as query parameters and returns a side-by-side comparison by calling get_player_comparison(). Returns a 400 error if fewer than two players are provided.
+- GET /api/compare/teams?team1=X&team2=Y — accepts two team names as query parameters and returns a side-by-side comparison by calling get_team_comparison(). Returns a 400 error if fewer than two teams are provided.
+
+All endpoints return JSON and handle exceptions by returning a descriptive error message rather than crashing.
+
+### Does it do what was expected
+
+Yes. All four endpoints return valid JSON responses when tested in the browser. They connect directly to the existing DataService adapter layer, so no changes to the data layer were needed. The endpoints are ready for the frontend to integrate in PM5.
+
+## AI Tools Used
+
+Claude AI was used to help implement these endpoints.
+
+Prompt used:
+"Can you write the Flask routes for player stats, team stats, player comparison, and team comparison endpoints that connect to the existing DataService adapter?"
+
+Modifications made:
+The basic Flask server structure and static file serving were already present in app.py. The four new endpoints (/api/player, /api/team, /api/compare/players, /api/compare/teams) were added and adapted to match the existing DataService method names `request` was also added to the Flask import to support query parameters in the comparison endpoints.

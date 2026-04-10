@@ -4,7 +4,7 @@ import os
 # Allow importing from data/ directory
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'data'))
 
-from flask import Flask, jsonify, send_from_directory
+from flask import Flask, jsonify, send_from_directory, request
 from data_service import DataService
 
 app = Flask(__name__, static_folder='../frontend')
@@ -36,6 +36,49 @@ def team_rankings():
     try:
         rankings = service.get_team_rankings()
         return jsonify(rankings)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+    
+@app.route('/api/player/<name>')
+def player_stats(name):
+    try:
+        stats = service.get_player_stats(name)
+        return jsonify(stats)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/team/<name>')
+def team_stats(name):
+    try:
+        stats = service.get_team_stats(name)
+        return jsonify(stats)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/compare/players')
+def compare_players():
+    try:
+        player1 = request.args.get('player1')
+        player2 = request.args.get('player2')
+        if not player1 or not player2:
+            return jsonify({'error': 'Two players required'}), 400
+        result = service.get_player_comparison(player1, player2)
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/compare/teams')
+def compare_teams():
+    try:
+        team1 = request.args.get('team1')
+        team2 = request.args.get('team2')
+        if not team1 or not team2:
+            return jsonify({'error': 'Two teams required'}), 400
+        result = service.get_team_comparison(team1, team2)
+        return jsonify(result)
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
