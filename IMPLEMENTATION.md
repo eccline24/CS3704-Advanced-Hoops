@@ -78,4 +78,4 @@ Prompt used:
 "Can you write the Flask routes for player stats, team stats, player comparison, and team comparison endpoints that connect to the existing DataService adapter?"
 
 Modifications made:
-The basic Flask server structure and static file serving were already present in app.py. The four new endpoints (/api/player, /api/team, /api/compare/players, /api/compare/teams) were added and adapted to match the existing DataService method names `request` was also added to the Flask import to support query parameters in the comparison endpoints.
+The basic Flask server structure and static file serving were already present in app.py. The four new endpoints (/api/player, /api/team, /api/compare/players, /api/compare/teams) were added and adapted to match the existing DataService method names `request` was also added to the Flask import to support query parameters in the comparison endpoints. 

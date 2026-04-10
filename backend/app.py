@@ -7,21 +7,26 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'data'))
 from flask import Flask, jsonify, send_from_directory, request
 from data_service import DataService
 
+# Serve frontend files from ../frontend
 app = Flask(__name__, static_folder='../frontend')
 
+# Data service backed by the live NBA API
 service = DataService(source='nba_api')
 
 
+# Serve index.html at the root
 @app.route('/')
 def index():
     return send_from_directory(app.static_folder, 'index.html')
 
 
+# Serve any other static asset (JS, CSS, etc.)
 @app.route('/<path:filename>')
 def static_files(filename):
     return send_from_directory(app.static_folder, filename)
 
 
+# Top 10 scorers by points
 @app.route('/api/top-players')
 def top_players():
     try:
@@ -31,6 +36,7 @@ def top_players():
         return jsonify({'error': str(e)}), 500
 
 
+# Full league standings
 @app.route('/api/team-rankings')
 def team_rankings():
     try:
@@ -39,6 +45,7 @@ def team_rankings():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
     
+# Stats for a single player by name
 @app.route('/api/player/<name>')
 def player_stats(name):
     try:
@@ -48,6 +55,7 @@ def player_stats(name):
         return jsonify({'error': str(e)}), 500
 
 
+# Stats for a single team by name
 @app.route('/api/team/<name>')
 def team_stats(name):
     try:
@@ -57,6 +65,7 @@ def team_stats(name):
         return jsonify({'error': str(e)}), 500
 
 
+# Head-to-head comparison of two players (query params: player1, player2)
 @app.route('/api/compare/players')
 def compare_players():
     try:
@@ -70,6 +79,7 @@ def compare_players():
         return jsonify({'error': str(e)}), 500
 
 
+# Head-to-head comparison of two teams (query params: team1, team2)
 @app.route('/api/compare/teams')
 def compare_teams():
     try:
@@ -83,5 +93,6 @@ def compare_teams():
         return jsonify({'error': str(e)}), 500
 
 
+# Run the dev server with auto-reload
 if __name__ == '__main__':
     app.run(debug=True)

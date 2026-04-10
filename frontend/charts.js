@@ -1,3 +1,4 @@
+// Draws the top scorers bar chart
 function renderTopPlayers(data) {
     const labels = data.map(p => p.PLAYER);
     const pts = data.map(p => p.PTS);
@@ -20,6 +21,7 @@ function renderTopPlayers(data) {
     });
 }
 
+// Draws the team standings bar chart
 function renderTeamRankings(data) {
     const labels = data.map(t => t.TeamName);
     const winPct = data.map(t => parseFloat(t.WinPCT));
@@ -42,8 +44,10 @@ function renderTeamRankings(data) {
     });
 }
 
+// On page load, render charts from injected data or fall back to API
 document.addEventListener('DOMContentLoaded', function () {
 
+    // Top players: use static data if present, else fetch from API
     if (window.__TOP_PLAYERS__) {
         renderTopPlayers(window.__TOP_PLAYERS__);
     } else {
@@ -53,6 +57,7 @@ document.addEventListener('DOMContentLoaded', function () {
             .catch(err => console.error('Failed to load top players:', err));
     }
 
+    // Team rankings: use static data if present, else fetch from API
     if (window.__TEAM_RANKINGS__) {
         renderTeamRankings(window.__TEAM_RANKINGS__);
     } else {
