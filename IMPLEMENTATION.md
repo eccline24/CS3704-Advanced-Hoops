@@ -59,16 +59,16 @@ endpoints that the frontend can call to retrieve live basketball data from the N
 
 Four REST API endpoints were added to the Flask backend to expose player and team data to the frontend:
 
-- GET /api/player/<name> — accepts a player name in the URL and returns that player's stats by calling get_player_stats() on the data service.
-- GET /api/team/<name> — accepts a team name in the URL and returns that team's stats by calling get_team_stats().
-- GET /api/compare/players?player1=X&player2=Y — accepts two player names as query parameters and returns a side-by-side comparison by calling get_player_comparison(). Returns a 400 error if fewer than two players are provided.
-- GET /api/compare/teams?team1=X&team2=Y — accepts two team names as query parameters and returns a side-by-side comparison by calling get_team_comparison(). Returns a 400 error if fewer than two teams are provided.
+- GET /api/player/<name> - accepts a player name in the URL and returns that player's stats by calling get_player_stats() on the data service.
+- GET /api/team/<name> - accepts a team name in the URL and returns that team's stats by calling get_team_stats().
+- GET /api/compare/players?player1=X&player2=Y - accepts two player names as query parameters and returns a side-by-side comparison by calling get_player_comparison(). Returns a 400 error if fewer than two players are provided.
+- GET /api/compare/teams?team1=X&team2=Y - accepts two team names as query parameters and returns a side-by-side comparison by calling get_team_comparison(). Returns a 400 error if fewer than two teams are provided.
 
 All endpoints return JSON and handle exceptions by returning a descriptive error message rather than crashing.
 
 ### Does it do what was expected
 
-Yes. All four endpoints return valid JSON responses when tested in the browser. They connect directly to the existing DataService adapter layer, so no changes to the data layer were needed. The endpoints are ready for the frontend to integrate in PM5.
+Yes. They connect directly to the existing DataService adapter layer, so no changes to the data layer were needed. The endpoints are ready for the frontend to integrate in PM5.
 
 ## AI Tools Used
 
