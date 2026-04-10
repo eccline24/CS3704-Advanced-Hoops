@@ -1,3 +1,4 @@
 nba_api
 basketball_reference_web_scraper
 pandas
+flask
