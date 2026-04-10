@@ -28,3 +28,20 @@ Claude AI was used in general to give at first a general idea of how the project
 I am looking to create a web application that aims to implement multiple online basketball sources and combine stats into one spot. I would like to start creating this from relatively scratch. What is a good starting point for this?
 
 I would like to focus on obtaining data for now. What would this look if I wanted to start coding this? The libraries I would like to use are in python.
+
+
+
+# Evan Cline
+
+## Features Implemented
+
+### Frontend Features
+I started to implemented the frontend for our web app. The index.html file is the home page for the application and will display general staistics from the data adapters, with links to other frontend pages that will be developed.
+
+### Does it do what is expected
+Not quite yet, the file still needs to be implemented to be compatible with and "talk to" the data adapter python files. It also needs to add links to the other feature frontend files.
+
+## AI Tools Used
+I used ChatGPT to help me generate the index.html file. The code was slightly modified from what was given, just changing variable names to reflect our context. 
+
+Prompt used: "I am creating a college basketball web application that displays college basketball statistics from different API data sources. Could you help me start on the frontend by creating an index.html file for the home page of the web application"
