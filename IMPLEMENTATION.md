@@ -46,6 +46,59 @@ I used ChatGPT to help me generate the index.html file. The code was slightly mo
 
 Prompt used: "I am creating a college basketball web application that displays college basketball statistics from different API data sources. Could you help me start on the frontend by creating an index.html file for the home page of the web application"
 
+# Ragav
+
+## Features Implemented
+
+### Frontend Charts and Static Data Pipeline
+Files:
+frontend/charts.js
+frontend/index.html
+backend/generate_static.py
+
+I added interactive bar charts to the home page using Chart.js. The first chart displays the top 10 NBA scorers by total points, and the second displays all 30 teams ranked by win percentage. Both charts are rendered dynamically from real data.
+
+A dual-mode data loading system was implemented in `charts.js`: on page load it checks for `window.__TOP_PLAYERS__` and `window.__TEAM_RANKINGS__` (pre-baked static data), and falls back to fetching from the live `/api/top-players` and `/api/team-rankings` Flask endpoints if those globals are not present. This means the page works both when opened directly as a static file and when served through the Flask backend.
+
+`generate_static.py` was written to support the static file mode. It fetches live data from the NBA API via the existing `DataService`, serializes it to JSON, and injects it into `index.html` between `<!-- BEGIN_STATIC_DATA -->` and `<!-- END_STATIC_DATA -->` sentinel markers. On subsequent runs it replaces the existing block rather than duplicating it, using a regex replacement. The script also supports a first-run mode where it inserts the block before a `<!-- DATA_INJECTION_POINT -->` anchor comment.
+
+The `index.html` file was updated to include the Chart.js CDN script tag, the two `<canvas>` elements for the charts, the `DATA_INJECTION_POINT` anchor, and the `<script src="charts.js">` tag.
+
+### Does it do what was expected
+
+Yes. Running `generate_static.py` once embeds current NBA data into `index.html` so it can be opened directly in a browser without a server. When the Flask server is running instead, `charts.js` falls back to the live API endpoints automatically. Both paths render the same two charts correctly.
+
+## AI Tools Used
+
+Claude AI was used to help design and implement the static data injection pipeline and the dual-mode loading logic in `charts.js`.
+
+Prompt used:
+"How can I embed live NBA API data into a static HTML file so it works without a server, while also supporting live API calls when a Flask backend is running?"
+
+Modifications made:
+The injection script and sentinel marker approach were adapted to fit the existing `index.html` structure. The fallback fetch logic in `charts.js` was written to match the exact field names (`PLAYER`, `PTS`, `TeamName`, `WinPCT`) returned by the NBA API adapter.
+
+
+# Ramya
+
+## Features Implemented
+
+### Code Comments, Backend Support, and Documentation
+Files:
+backend/app.py
+IMPLEMENTATION.md
+
+Added inline comments throughout the backend and frontend files to explain the purpose of functions, routes, and data flow. Contributed to backend development and helped maintain the project documentation in `IMPLEMENTATION.md`.
+
+### Does it do what was expected
+
+Yes. The comments improve readability and make it easier for teammates to understand the codebase.
+
+## AI Tools Used
+
+No AI tools noted for this section.
+
+
 # Sharlette Vijoy
 
 ## Features Implemented
@@ -79,3 +132,4 @@ Prompt used:
 
 Modifications made:
 The basic Flask server structure and static file serving were already present in app.py. The four new endpoints (/api/player, /api/team, /api/compare/players, /api/compare/teams) were added and adapted to match the existing DataService method names `request` was also added to the Flask import to support query parameters in the comparison endpoints. 
+
