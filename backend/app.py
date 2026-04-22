@@ -1,4 +1,4 @@
-import sys
+﻿import sys
 import os
 
 # Allow importing from data/ directory
@@ -7,92 +7,160 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'data'))
 from flask import Flask, jsonify, send_from_directory, request
 from data_service import DataService
 
-# Serve frontend files from ../frontend
 app = Flask(__name__, static_folder='../frontend')
 
-# Data service backed by the live NBA API
-service = DataService(source='nba_api')
+# Default service (NBA API)
+nba_service = DataService(source='nba_api')
+bbref_service = DataService(source='bbref')
 
 
-# Serve index.html at the root
+# ------------------------
+# Static frontend
+# ------------------------
+
 @app.route('/')
 def index():
     return send_from_directory(app.static_folder, 'index.html')
 
 
-# Serve any other static asset (JS, CSS, etc.)
 @app.route('/<path:filename>')
 def static_files(filename):
     return send_from_directory(app.static_folder, filename)
 
 
-# Top 10 scorers by points
+# ------------------------
+# Charts endpoints
+# ------------------------
+
 @app.route('/api/top-players')
 def top_players():
     try:
-        players = service.get_top_players('PTS', limit=10)
-        return jsonify(players)
+        return jsonify(nba_service.get_top_players('PTS', limit=10))
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
 
-# Full league standings
 @app.route('/api/team-rankings')
 def team_rankings():
     try:
-        rankings = service.get_team_rankings()
-        return jsonify(rankings)
+        return jsonify(nba_service.get_team_rankings())
     except Exception as e:
         return jsonify({'error': str(e)}), 500
-    
-# Stats for a single player by name
+
+
+# ------------------------
+# Single entity endpoints
+# ------------------------
+
 @app.route('/api/player/<name>')
 def player_stats(name):
     try:
-        stats = service.get_player_stats(name)
-        return jsonify(stats)
+        return jsonify(nba_service.get_player_stats(name))
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
 
-# Stats for a single team by name
 @app.route('/api/team/<name>')
 def team_stats(name):
     try:
-        stats = service.get_team_stats(name)
-        return jsonify(stats)
+        return jsonify(nba_service.get_team_stats(name))
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
 
-# Head-to-head comparison of two players (query params: player1, player2)
+# ------------------------
+# Player comparison (SAME SOURCE)
+# ------------------------
+
 @app.route('/api/compare/players')
 def compare_players():
     try:
-        player1 = request.args.get('player1')
-        player2 = request.args.get('player2')
-        if not player1 or not player2:
+        p1 = request.args.get('player1')
+        p2 = request.args.get('player2')
+
+        if not p1 or not p2:
             return jsonify({'error': 'Two players required'}), 400
-        result = service.get_player_comparison(player1, player2)
+
+        result = nba_service.get_player_comparison(p1, p2)
         return jsonify(result)
+
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
 
-# Head-to-head comparison of two teams (query params: team1, team2)
+# ------------------------
+# Team comparison (SAME SOURCE)
+# ------------------------
+
 @app.route('/api/compare/teams')
 def compare_teams():
     try:
-        team1 = request.args.get('team1')
-        team2 = request.args.get('team2')
-        if not team1 or not team2:
+        t1 = request.args.get('team1')
+        t2 = request.args.get('team2')
+
+        if not t1 or not t2:
             return jsonify({'error': 'Two teams required'}), 400
-        result = service.get_team_comparison(team1, team2)
+
+        result = nba_service.get_team_comparison(t1, t2)
         return jsonify(result)
+
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
 
-# Run the dev server with auto-reload
+# ------------------------
+# Cross-source comparison (YOUR FEATURE)
+# ------------------------
+
+@app.route('/api/compare/sources/player/<name>')
+def compare_sources_player(name):
+    try:
+        return jsonify({
+            'player': name,
+            'nba_api': nba_service.get_player_stats(name),
+            'bbref': bbref_service.get_player_stats(name)
+        })
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/compare/sources/team/<name>')
+def compare_sources_team(name):
+    try:
+        return jsonify({
+            'team': name,
+            'nba_api': nba_service.get_team_stats(name),
+            'bbref': bbref_service.get_team_stats(name)
+        })
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+# ------------------------
+# Player comparison (CROSS-SOURCE)
+# ------------------------
+
+@app.route('/api/compare/players/<p1>/<p2>')
+def compare_players_cross(p1, p2):
+    return jsonify({
+        "players": [
+            {
+                "name": p1,
+                "nba_api": nba_service.get_player_stats(p1),
+                "bbref": bbref_service.get_player_stats(p1)
+            },
+            {
+                "name": p2,
+                "nba_api": nba_service.get_player_stats(p2),
+                "bbref": bbref_service.get_player_stats(p2)
+            }
+        ]
+    })
+
+
+# ------------------------
+# Run server
+# ------------------------
+
 if __name__ == '__main__':
     app.run(debug=True)

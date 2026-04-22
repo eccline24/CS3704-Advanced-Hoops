@@ -23,20 +23,24 @@ class BBRefAdapter(BaseAdapter):
         return None  # No match found
 
     # Searches Basketball Reference for the player by name and returns their profile data.
-    # client.search() returns a dict with a 'players' key; we take the first result.
     def get_player_stats(self, player_name: str) -> dict:
         try:
-            results = client.search(term=player_name)
-            if not results or not results.get('players'):
-                return {"error": f"'{player_name}' not found on Basketball Reference."}
+            stats = client.players_season_totals(season_end_year=2025)
 
-            player_data = results['players'][0]  # Use the best match
+            matches = [
+                p for p in stats
+                if f"{p.get('first_name','')} {p.get('last_name','')}".lower() == player_name.lower()
+            ]
+
+            if not matches:
+                return {"error": f"'{player_name}' not found."}
 
             return {
                 "player": player_name,
                 "source": "basketball_reference",
-                "data": player_data
+                "stats": matches
             }
+
         except Exception as e:
             return {"error": str(e)}
 

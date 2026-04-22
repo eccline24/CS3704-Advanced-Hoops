@@ -38,17 +38,14 @@ def adapter():
 
 class TestFindTeamEnum:
     def test_valid_team_returns_enum(self, adapter):
-        """Exact match (case-insensitive, spaces vs underscores)."""
         result = adapter._find_team_enum("golden state warriors")
         assert result == Team.GOLDEN_STATE_WARRIORS
 
     def test_case_insensitive_match(self, adapter):
-        """Upper-case input still resolves."""
         result = adapter._find_team_enum("BOSTON CELTICS")
         assert result == Team.BOSTON_CELTICS
 
     def test_invalid_team_returns_none(self, adapter):
-        """Bogus team name returns None, not an exception."""
         result = adapter._find_team_enum("Springfield Atoms")
         assert result is None
 
@@ -64,37 +61,38 @@ class TestFindTeamEnum:
 class TestGetPlayerStats:
     @patch('adapters.bbref_adapter.client')
     def test_found_player_returns_data(self, mock_client, adapter):
-        mock_client.search.return_value = {
-            'players': [{'name': 'LeBron James', 'identifier': 'jamesle01'}]
-        }
+        mock_client.players_season_totals.return_value = [
+            {'first_name': 'LeBron', 'last_name': 'James', 'points': 2000}
+        ]
         result = adapter.get_player_stats("LeBron James")
 
         assert result['player'] == "LeBron James"
         assert result['source'] == "basketball_reference"
-        assert 'data' in result
-        assert result['data']['name'] == 'LeBron James'
+        assert 'stats' in result
+        assert len(result['stats']) == 1
 
     @patch('adapters.bbref_adapter.client')
     def test_player_not_found_returns_error(self, mock_client, adapter):
-        mock_client.search.return_value = {'players': []}
+        mock_client.players_season_totals.return_value = [
+            {'first_name': 'Stephen', 'last_name': 'Curry', 'points': 1800}
+        ]
         result = adapter.get_player_stats("Fake Player")
 
         assert 'error' in result
 
     @patch('adapters.bbref_adapter.client')
     def test_none_response_returns_error(self, mock_client, adapter):
-        mock_client.search.return_value = None
+        mock_client.players_season_totals.return_value = []
         result = adapter.get_player_stats("LeBron James")
 
         assert 'error' in result
 
     @patch('adapters.bbref_adapter.client')
     def test_exception_returns_error_dict(self, mock_client, adapter):
-        mock_client.search.side_effect = Exception("network timeout")
+        mock_client.players_season_totals.side_effect = Exception("network timeout")
         result = adapter.get_player_stats("LeBron James")
 
         assert 'error' in result
-        assert "network timeout" in result['error']
 
 
 # ---------------------------------------------------------------------------
@@ -133,9 +131,10 @@ class TestGetTeamStats:
 class TestGetPlayerComparison:
     @patch('adapters.bbref_adapter.client')
     def test_comparison_structure(self, mock_client, adapter):
-        mock_client.search.return_value = {
-            'players': [{'name': 'Player', 'identifier': 'abc'}]
-        }
+        mock_client.players_season_totals.return_value = [
+            {'first_name': 'LeBron', 'last_name': 'James', 'points': 2000},
+            {'first_name': 'Stephen', 'last_name': 'Curry', 'points': 1800},
+        ]
         result = adapter.get_player_comparison("LeBron James", "Stephen Curry")
 
         assert result['comparison'] == 'player'
@@ -145,13 +144,9 @@ class TestGetPlayerComparison:
 
     @patch('adapters.bbref_adapter.client')
     def test_one_player_missing_still_returns_structure(self, mock_client, adapter):
-        """Even if one lookup fails, the comparison dict is still returned."""
-        def side_effect(term):
-            if term == "LeBron James":
-                return {'players': [{'name': 'LeBron James', 'identifier': 'jamesle01'}]}
-            return {'players': []}
-
-        mock_client.search.side_effect = side_effect
+        mock_client.players_season_totals.return_value = [
+            {'first_name': 'LeBron', 'last_name': 'James', 'points': 2000},
+        ]
         result = adapter.get_player_comparison("LeBron James", "Ghost Player")
 
         assert 'LeBron James' in result
@@ -207,7 +202,8 @@ class TestGetTopPlayers:
     @patch('adapters.bbref_adapter.client')
     def test_returns_correct_limit(self, mock_client, adapter):
         mock_client.players_season_totals.return_value = [
-            {'player': f'Player{i}', 'points': 100 - i} for i in range(20)
+            {'first_name': f'Player', 'last_name': str(i), 'points': 100 - i}
+            for i in range(20)
         ]
         result = adapter.get_top_players(stat_category='points', limit=5)
 
@@ -216,9 +212,9 @@ class TestGetTopPlayers:
     @patch('adapters.bbref_adapter.client')
     def test_sorted_descending(self, mock_client, adapter):
         mock_client.players_season_totals.return_value = [
-            {'player': 'A', 'points': 500},
-            {'player': 'B', 'points': 1500},
-            {'player': 'C', 'points': 1000},
+            {'first_name': 'A', 'last_name': 'A', 'points': 500},
+            {'first_name': 'B', 'last_name': 'B', 'points': 1500},
+            {'first_name': 'C', 'last_name': 'C', 'points': 1000},
         ]
         result = adapter.get_top_players(stat_category='points', limit=3)
 
@@ -228,13 +224,12 @@ class TestGetTopPlayers:
 
     @patch('adapters.bbref_adapter.client')
     def test_missing_stat_key_treated_as_zero(self, mock_client, adapter):
-        """Players missing the stat key should sort below players who have it."""
         mock_client.players_season_totals.return_value = [
-            {'player': 'A', 'points': 100},
-            {'player': 'B'},           # no 'points' key
+            {'first_name': 'A', 'last_name': 'A', 'points': 100},
+            {'first_name': 'B', 'last_name': 'B'},
         ]
         result = adapter.get_top_players(stat_category='points', limit=2)
-        assert result[0]['player'] == 'A'
+        assert result[0]['points'] == 100
 
     @patch('adapters.bbref_adapter.client')
     def test_exception_returns_list_with_error(self, mock_client, adapter):

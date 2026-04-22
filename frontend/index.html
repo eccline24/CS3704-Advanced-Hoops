@@ -20,15 +20,41 @@
 </head>
 <body>
     <h1>Basketball Stats Dashboard</h1>
+
     <!-- Top scorers chart -->
     <div>
         <h2>Top Players</h2>
         <canvas id="topPlayersChart"></canvas>
     </div>
+
     <!-- Standings chart -->
     <div>
         <h2>Team Rankings</h2>
         <canvas id="teamRankingsChart"></canvas>
+    </div>
+
+    <!-- Source Comparison Section -->
+    <div id="source-comparison">
+        <h2>NBA API vs Basketball Reference</h2>
+        <input type="text" id="compare-source-input" placeholder="Enter player or team name" />
+        <select id="compare-source-type">
+            <option value="player">Player</option>
+            <option value="team">Team</option>
+        </select>
+        <button onclick="fetchSourceComparison()">Compare Sources</button>
+        <div id="source-comparison-result"></div>
+    </div>
+
+    <!-- Player Comparison Section -->
+    <div id="player-comparison">
+        <h2>Player vs Player Comparison</h2>
+
+        <input type="text" id="player1-input" placeholder="Enter first player" />
+        <input type="text" id="player2-input" placeholder="Enter second player" />
+
+        <button onclick="fetchPlayerComparison()">Compare Players</button>
+
+        <div id="player-comparison-result"></div>
     </div>
 </body>
 </html>
