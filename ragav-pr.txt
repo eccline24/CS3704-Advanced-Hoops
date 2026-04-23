@@ -1,0 +1,34 @@
+# Peer Review: Ragav's PR — Frontend Charts and Static Data Pipeline
+
+**Files reviewed:** frontend/index.html, frontend/charts.js, backend/generate_static.py
+
+## Overview
+This PR adds a Chart.js-based home page with two visualizations (top 10 scorers, team rankings by win %) and a dual-mode data loading system that lets the page work either as a standalone static file or against the live Flask backend. The design is thoughtful — the sentinel-marker injection and the window.__TOP_PLAYERS__ / __TEAM_RANKINGS__ fallback pattern show real effort beyond a bare-minimum implementation. That said, the index.html shell has a handful of correctness and maintainability issues that should be addressed before merging.
+
+## Correctness
+- Scripts in <head> without defer. Both the Chart.js CDN and charts.js are loaded in <head> with no defer or async. If charts.js touches document.getElementById at the top level, the canvases won't exist yet and charts will silently fail to render. Add defer to both script tags, or move them to the bottom of <body>.
+- Unpinned Chart.js CDN. The URL resolves to the latest major version, which means a future Chart.js breaking change will break this page with no code change on our end. Pin a version like chart.js@4.4.3.
+- Missing <meta charset="UTF-8">. The data contains unicode escapes like Luka Don\u010di\u0107. These work inside a JS string literal, but if anyone edits the file to use real unicode characters, they'll render as mojibake without a declared charset.
+- Win/loss totals don't add up to 82. Every team in the static data has WINS + LOSSES = 80, not a full NBA season. If this is mid-season data, the page should say so.
+- No failure mode if Chart.js fails to load. If the CDN is blocked, both canvases stay blank with no user-facing message.
+- Missing <html lang="en"> and viewport meta tag. Both matter for accessibility and mobile rendering.
+
+## Clarity
+The writeup in IMPLEMENTATION.md explains the design well, and the sentinel-marker comments make the file's intent clear at a glance. Two suggestions:
+- The window.__TOP_PLAYERS__ / __TEAM_RANKINGS__ naming uses double underscores, which conventionally signals "private" in Python. Since these are deliberately public globals, something like window.topPlayers / window.teamRankings, or a single namespace object, would read more naturally.
+- The chart sections use plain <div> wrappers. Semantic tags like <main> and <section> would help both readers and assistive tech.
+
+## Maintainability
+- No CSS. The page relies on browser defaults, which means canvases will stretch unpredictably on wide monitors. A small <style> block with max-width on the chart containers would help.
+- The sentinel-marker injection is clever but fragile. Regex-replacing between HTML comments works, but one stray edit inside the markers can silently corrupt the file. Fetching data.json via fetch() at page load would be simpler, though not a blocker for this PR.
+- No SRI hash on the CDN script. Minor supply-chain concern — an integrity attribute on the Chart.js <script> tag would pin the exact bytes being loaded.
+
+## AI-Specific Concerns
+Ragav documented that Claude was used to help design the static injection pipeline and fallback logic, and noted that he adapted the output to match existing field names — that's exactly the right way to document AI use. That said, a few issues above look like typical AI boilerplate patterns:
+- Unpinned CDN URL is a classic AI tell. Models default to the bare npm/chart.js URL because that's what appears in tutorial-style training data.
+- Scripts in <head> without defer, and missing charset/lang/viewport, are standard HTML boilerplate that AI assistants frequently omit when generating a "minimal" example.
+
+Lesson learned: AI is great for the interesting logic (the dual-mode fallback here is genuinely nice), but the boring boilerplate — charset, defer, version pinning, SRI — still needs a human pass. It's easy to assume AI output is complete when it's actually missing standard production hygiene.
+
+## Recommendation
+Return for changes. The core functionality and design are solid, but the index.html shell needs the defer attribute, a pinned Chart.js version, and the standard <meta charset> / lang / viewport tags before merging. (Not applying this recommendation — per assignment instructions, the PR remains open for grading.)
