@@ -16,9 +16,17 @@ class BBRefAdapter(BaseAdapter):
     # BBRef's scraper identifies teams by a Team enum (e.g. Team.GOLDEN_STATE_WARRIORS).
     # This helper converts a plain string like "golden state warriors" into that enum
     # by normalizing underscores and comparing case-insensitively.
+    # Tries exact match first; falls back to substring match so partial queries
+    # like "golden state" resolve to Team.GOLDEN_STATE_WARRIORS.
     def _find_team_enum(self, team_name: str):
+        if not team_name.strip():
+            return None
+        name_lower = team_name.lower()
         for team in Team:
-            if team.name.lower().replace('_', ' ') == team_name.lower():
+            if team.name.lower().replace('_', ' ') == name_lower:
+                return team
+        for team in Team:
+            if name_lower in team.name.lower().replace('_', ' '):
                 return team
         return None  # No match found
 

@@ -56,6 +56,20 @@ class TestFindTeamEnum:
         result = adapter._find_team_enum("")
         assert result is None
 
+    def test_partial_name_returns_enum(self, adapter):
+        """Substring of a team's normalized name resolves via partial match."""
+        result = adapter._find_team_enum("golden state")
+        assert result == Team.GOLDEN_STATE_WARRIORS
+
+    def test_partial_city_name_returns_enum(self, adapter):
+        result = adapter._find_team_enum("boston")
+        assert result == Team.BOSTON_CELTICS
+
+    def test_exact_match_preferred_over_partial(self, adapter):
+        """Exact match wins even when another team's name contains the query as a substring."""
+        result = adapter._find_team_enum("los angeles lakers")
+        assert result == Team.LOS_ANGELES_LAKERS
+
 
 # ---------------------------------------------------------------------------
 # get_player_stats

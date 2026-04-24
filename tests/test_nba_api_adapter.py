@@ -135,6 +135,27 @@ class TestFindPlayerId:
         mock_players.get_players.return_value = player_list
         assert adapter._find_player_id("") is None
 
+    @patch('adapters.nba_api_adapter.players')
+    def test_partial_name_returns_id(self, mock_players, adapter, player_list):
+        """Substring of a player's full name should still resolve to their ID."""
+        mock_players.get_players.return_value = player_list
+        assert adapter._find_player_id("LeBron") == 2544
+
+    @patch('adapters.nba_api_adapter.players')
+    def test_partial_last_name_returns_id(self, mock_players, adapter, player_list):
+        mock_players.get_players.return_value = player_list
+        assert adapter._find_player_id("Curry") == 201939
+
+    @patch('adapters.nba_api_adapter.players')
+    def test_exact_match_preferred_over_partial(self, mock_players, adapter):
+        """When both an exact and a partial match exist, exact wins."""
+        players_list = [
+            {'full_name': 'LeBron James Jr', 'id': 9999},
+            {'full_name': 'LeBron James', 'id': 2544},
+        ]
+        mock_players.get_players.return_value = players_list
+        assert adapter._find_player_id("LeBron James") == 2544
+
 
 # ---------------------------------------------------------------------------
 # _find_team_id
@@ -170,6 +191,29 @@ class TestFindTeamId:
     def test_empty_string_returns_none(self, mock_teams, adapter, team_list):
         mock_teams.get_teams.return_value = team_list
         assert adapter._find_team_id("") is None
+
+    @patch('adapters.nba_api_adapter.teams')
+    def test_partial_full_name_returns_id(self, mock_teams, adapter, team_list):
+        """Substring of the full team name should resolve via partial match."""
+        mock_teams.get_teams.return_value = team_list
+        assert adapter._find_team_id("Boston") == 1610612738
+
+    @patch('adapters.nba_api_adapter.teams')
+    def test_partial_nickname_returns_id(self, mock_teams, adapter, team_list):
+        mock_teams.get_teams.return_value = team_list
+        assert adapter._find_team_id("eltic") == 1610612738
+
+    @patch('adapters.nba_api_adapter.teams')
+    def test_exact_match_preferred_over_partial(self, mock_teams, adapter):
+        """Exact full-name match should win even when a partial match exists earlier in the list."""
+        teams_list = [
+            {'full_name': 'Los Angeles Clippers', 'abbreviation': 'LAC',
+             'nickname': 'Clippers', 'id': 1610612746},
+            {'full_name': 'Los Angeles Lakers', 'abbreviation': 'LAL',
+             'nickname': 'Lakers', 'id': 1610612747},
+        ]
+        mock_teams.get_teams.return_value = teams_list
+        assert adapter._find_team_id("Los Angeles Lakers") == 1610612747
 
 
 # ---------------------------------------------------------------------------

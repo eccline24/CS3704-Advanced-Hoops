@@ -19,24 +19,38 @@ class NBAApiAdapter(BaseAdapter):
 
     # Helper: looks up a player's numeric NBA ID by their full name (case-insensitive).
     # The nba_api requires an ID rather than a name for most endpoint calls.
+    # Tries an exact match first; falls back to substring match so partial names
+    # like "LeBron" resolve to "LeBron James".
     def _find_player_id(self, player_name: str):
-        all_players = players.get_players()
-        matches = [p for p in all_players if p['full_name'].lower() == player_name.lower()]
-        if not matches:
+        if not player_name.strip():
             return None
-        return matches[0]['id']  # Return the first match's ID
+        all_players = players.get_players()
+        name_lower = player_name.lower()
+        exact = [p for p in all_players if p['full_name'].lower() == name_lower]
+        if exact:
+            return exact[0]['id']
+        partial = [p for p in all_players if name_lower in p['full_name'].lower()]
+        return partial[0]['id'] if partial else None
 
     # Helper: looks up a team's numeric NBA ID by full name, abbreviation, or nickname.
     # Supports multiple formats (e.g. "Los Angeles Lakers", "LAL", or "Lakers").
+    # Falls back to substring match on full name or nickname so partial queries
+    # like "Golden State" resolve to the Warriors.
     def _find_team_id(self, team_name: str):
-        all_teams = teams.get_teams()
-        matches = [t for t in all_teams if
-                   t['full_name'].lower() == team_name.lower() or
-                   t['abbreviation'].lower() == team_name.lower() or
-                   t['nickname'].lower() == team_name.lower()]
-        if not matches:
+        if not team_name.strip():
             return None
-        return matches[0]['id']
+        all_teams = teams.get_teams()
+        name_lower = team_name.lower()
+        exact = [t for t in all_teams if
+                 t['full_name'].lower() == name_lower or
+                 t['abbreviation'].lower() == name_lower or
+                 t['nickname'].lower() == name_lower]
+        if exact:
+            return exact[0]['id']
+        partial = [t for t in all_teams if
+                   name_lower in t['full_name'].lower() or
+                   name_lower in t['nickname'].lower()]
+        return partial[0]['id'] if partial else None
 
     def get_player_stats(self, player_name: str) -> dict:
         player_id = self._find_player_id(player_name)
