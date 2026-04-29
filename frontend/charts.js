@@ -97,8 +97,15 @@ function renderTopPlayers(data) {
 function renderTeamRankings(data) {
     console.log('Rendering team rankings with data:', data);
 
-    const labels = data.map(t => t.TeamName);
-    const winPct = data.map(t => Number(t.WinPCT));
+    const sortedData = [...data].sort((a, b) => {
+        if ((a.Conference || '') !== (b.Conference || '')) {
+            return (a.Conference || '').localeCompare(b.Conference || '');
+        }
+        return Number(b.WINS || 0) - Number(a.WINS || 0);
+    });
+    const labels = sortedData.map(t => `${t.TeamName} (${t.Conference || 'N/A'})`);
+    const eastData = sortedData.map(t => t.Conference === 'East' ? Number(t.WINS) : null);
+    const westData = sortedData.map(t => t.Conference === 'West' ? Number(t.WINS) : null);
 
     const ctx = document.getElementById('teamRankingsChart');
     if (!ctx) {
@@ -111,10 +118,17 @@ function renderTeamRankings(data) {
         data: {
             labels,
             datasets: [{
-                label: 'Win %',
-                data: winPct,
+                label: 'Eastern Conference',
+                data: eastData,
                 backgroundColor: '#f87171',
                 borderColor: '#dc2626',
+                borderWidth: 2,
+                borderRadius: 6
+            }, {
+                label: 'Western Conference',
+                data: westData,
+                backgroundColor: '#60a5fa',
+                borderColor: '#3b82f6',
                 borderWidth: 2,
                 borderRadius: 6
             }]
@@ -124,18 +138,17 @@ function renderTeamRankings(data) {
             maintainAspectRatio: true,
             plugins: {
                 legend: {
-                    display: false
+                    display: true,
+                    labels: {
+                        color: '#e2e8f0'
+                    }
                 }
             },
             scales: {
                 y: {
                     beginAtZero: true,
-                    max: 1,
                     ticks: {
-                        color: '#e2e8f0',
-                        callback: function (value) {
-                            return (value * 100) + '%';
-                        }
+                        color: '#e2e8f0'
                     },
                     grid: {
                         color: 'rgba(148, 163, 184, 0.1)'
@@ -193,46 +206,39 @@ function renderTopAssists(data) {
     });
 }
 
-function renderConferenceWinSplit(rankings) {
-    const ctx = document.getElementById('conferenceWinChart');
-    if (!ctx || !rankings?.length) return;
+function renderTopRebounds(data) {
+    const labels = data.map(p => p.PLAYER);
+    const rebounds = data.map(p => p.REB);
 
-    const grouped = rankings.reduce((acc, team) => {
-        const conf = team.Conference || 'Unknown';
-        acc[conf] = acc[conf] || { sum: 0, count: 0 };
-        acc[conf].sum += Number(team.WinPCT || 0);
-        acc[conf].count += 1;
-        return acc;
-    }, {});
-
-    const labels = Object.keys(grouped);
-    const values = labels.map(conf => {
-        const { sum, count } = grouped[conf];
-        return count ? (sum / count) * 100 : 0;
-    });
+    const ctx = document.getElementById('topReboundsChart');
+    if (!ctx) return;
 
     new Chart(ctx, {
-        type: 'doughnut',
+        type: 'bar',
         data: {
             labels,
             datasets: [{
-                data: values,
-                backgroundColor: ['#60a5fa', '#f87171', '#a78bfa'],
-                borderColor: '#0f172a',
-                borderWidth: 2
+                label: 'Rebounds',
+                data: rebounds,
+                backgroundColor: '#a78bfa',
+                borderColor: '#8b5cf6',
+                borderWidth: 2,
+                borderRadius: 6
             }]
         },
         options: {
             responsive: true,
             maintainAspectRatio: true,
-            plugins: {
-                legend: { labels: { color: '#e2e8f0' } },
-                tooltip: {
-                    callbacks: {
-                        label(context) {
-                            return `${context.label}: ${context.parsed.toFixed(1)}% avg win rate`;
-                        }
-                    }
+            plugins: { legend: { display: false } },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: { color: '#e2e8f0' },
+                    grid: { color: 'rgba(148, 163, 184, 0.1)' }
+                },
+                x: {
+                    ticks: { color: '#e2e8f0' },
+                    grid: { color: 'rgba(148, 163, 184, 0.1)' }
                 }
             }
         }
@@ -249,6 +255,7 @@ document.addEventListener('DOMContentLoaded', () => {
         ? Promise.resolve(window.__TOP_PLAYERS__)
         : fetch('/api/top-players').then(res => res.json());
     const topAssistsPromise = fetch('/api/top-players?stat=AST').then(res => res.json());
+    const topReboundsPromise = fetch('/api/top-players?stat=REB').then(res => res.json());
 
     const teamRankingsPromise = window.__TEAM_RANKINGS__
         ? Promise.resolve(window.__TEAM_RANKINGS__)
@@ -265,7 +272,6 @@ document.addEventListener('DOMContentLoaded', () => {
         .then(data => {
             console.log('Team rankings data loaded:', data);
             renderTeamRankings(data);
-            renderConferenceWinSplit(data);
         })
         .catch(err => console.error('Team rankings error:', err));
 
@@ -275,6 +281,13 @@ document.addEventListener('DOMContentLoaded', () => {
             renderTopAssists(data);
         })
         .catch(err => console.error('Top assists error:', err));
+
+    topReboundsPromise
+        .then(data => {
+            console.log('Top rebounds data loaded:', data);
+            renderTopRebounds(data);
+        })
+        .catch(err => console.error('Top rebounds error:', err));
 
     const sourceInput = document.getElementById('compare-source-input');
     if (sourceInput) {
