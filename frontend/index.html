@@ -1,60 +1,434 @@
-<!DOCTYPE html>
-<html>
+<!--Used Github Copilot to generate an updated file-->
+<!--
+  Create a modern, professional basketball stats dashboard HTML file with a header, a response layout, two charts that will be "Top 10 scorers" and "Team Rankings by Win %"
+    that will be created by a separate chart.js file, room for two inputs for a source comparison with player name input and a player vs player comparison (i can input my exact function names),
+    with a results display area for both of these inputs that has still a modern look (i can update your code with my exact stats):
+
+    Can you give me some more suggestions on what to add to make the overall flow better
+
+    im having some issues with the player comparison advanced stats part. Can you give me some suggestions of what it could be or a debug script
+
+    Can you suggest just a few more general improvements to make the app smoother? these can be to the index file, the chart.js file, or my flask app file
+-->
+<html lang="en">
 <head>
-    <title>Basketball Stats</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Basketball Stats Dashboard</title>
     <!-- Chart.js CDN -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            color: #e2e8f0;
+            min-height: 100vh;
+            padding: 2rem 1rem;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        /* Header */
+        header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #60a5fa 0%, #3b82f6 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 0.5rem;
+        }
+
+        .subtitle {
+            color: #94a3b8;
+            font-size: 1rem;
+            font-weight: 400;
+        }
+
+        /* Main Grid */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+
+        /* Card Styling */
+        .card {
+            background: rgba(30, 41, 59, 0.8);
+            border: 1px solid rgba(148, 163, 184, 0.2);
+            border-radius: 12px;
+            padding: 2rem;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+
+            .card:hover {
+                border-color: rgba(148, 163, 184, 0.4);
+                box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+                transform: translateY(-4px);
+            }
+
+            .card h2 {
+                font-size: 1.5rem;
+                font-weight: 600;
+                margin-bottom: 1.5rem;
+                color: #f1f5f9;
+            }
+
+        /* Chart Container */
+        .chart-container {
+            position: relative;
+            height: 400px;
+            width: 100%;
+        }
+
+        /* Comparison Cards */
+        .comparison-section {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
+            gap: 2rem;
+        }
+
+        .comparison-card {
+            grid-column: 1 / -1;
+            background: rgba(30, 41, 59, 0.8);
+            border: 1px solid rgba(148, 163, 184, 0.2);
+            border-radius: 12px;
+            padding: 2rem;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+
+            .comparison-card h2 {
+                font-size: 1.5rem;
+                font-weight: 600;
+                margin-bottom: 1.5rem;
+                color: #f1f5f9;
+            }
+
+        /* Input Group */
+        .input-group {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+        }
+
+        input[type="text"],
+        select {
+            flex: 1;
+            min-width: 200px;
+            padding: 0.75rem 1rem;
+            background: rgba(15, 23, 42, 0.8);
+            border: 1px solid rgba(148, 163, 184, 0.3);
+            border-radius: 8px;
+            color: #e2e8f0;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.95rem;
+            transition: all 0.3s ease;
+        }
+
+            input[type="text"]:focus,
+            select:focus {
+                outline: none;
+                border-color: #60a5fa;
+                background: rgba(15, 23, 42, 1);
+                box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.1);
+            }
+
+            input[type="text"]::placeholder {
+                color: #64748b;
+            }
+
+        /* Button */
+        button {
+            padding: 0.75rem 1.5rem;
+            background: linear-gradient(135deg, #60a5fa 0%, #3b82f6 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(96, 165, 250, 0.3);
+        }
+
+            button:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 6px 20px rgba(96, 165, 250, 0.4);
+            }
+
+            button:active {
+                transform: translateY(0);
+            }
+
+        /* Result Container */
+        .result-container {
+            margin-top: 1.5rem;
+            padding: 1.5rem;
+            background: rgba(15, 23, 42, 0.6);
+            border-radius: 8px;
+            border: 1px solid rgba(148, 163, 184, 0.2);
+        }
+
+            .result-container h3 {
+                font-size: 1.1rem;
+                font-weight: 600;
+                color: #93c5fd;
+                margin-bottom: 1rem;
+            }
+
+            .result-container pre {
+                background: rgba(0, 0, 0, 0.3);
+                padding: 1rem;
+                border-radius: 6px;
+                overflow-x: auto;
+                color: #a1f3a1;
+                font-size: 0.85rem;
+                border: 1px solid rgba(148, 163, 184, 0.1);
+            }
+
+        .comparison-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-top: 1.5rem;
+        }
+
+        .comparison-item {
+            background: rgba(15, 23, 42, 0.6);
+            padding: 1.5rem;
+            border-radius: 8px;
+            border: 1px solid rgba(148, 163, 184, 0.2);
+        }
+
+            .comparison-item h4 {
+                font-size: 1.25rem;
+                font-weight: 600;
+                color: #93c5fd;
+                margin-bottom: 1.5rem;
+            }
+
+            .comparison-item h5 {
+                font-size: 0.95rem;
+                font-weight: 600;
+                color: #cbd5e1;
+                margin-top: 1rem;
+                margin-bottom: 0.5rem;
+                text-transform: uppercase;
+                letter-spacing: 0.05em;
+                opacity: 0.8;
+            }
+
+        /* Error and Loading States */
+        .error {
+            color: #fca5a5;
+            background: rgba(220, 38, 38, 0.1);
+            padding: 1rem;
+            border-radius: 6px;
+            border-left: 3px solid #dc2626;
+        }
+
+        .loading {
+            color: #93c5fd;
+            font-style: italic;
+        }
+
+        .success {
+            color: #86efac;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2rem;
+            }
+
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+                gap: 1.5rem;
+            }
+
+            .comparison-grid {
+                grid-template-columns: 1fr;
+                gap: 1.5rem;
+            }
+
+            .input-group {
+                flex-direction: column;
+            }
+
+            input[type="text"],
+            select {
+                width: 100%;
+            }
+
+            button {
+                width: 100%;
+            }
+
+            .chart-container {
+                height: 300px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header>
+            <h1>🏀 Basketball Stats Dashboard</h1>
+            <p class="subtitle">Real-time NBA statistics and analytics</p>
+        </header>
+
+        <!-- Charts Section -->
+        <div class="dashboard-grid">
+            <!-- Top Players Chart -->
+            <div class="card">
+                <h2>Top 10 Scorers</h2>
+                <div class="chart-container">
+                    <canvas id="topPlayersChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Team Rankings Chart -->
+            <div class="card">
+                <h2>Team Rankings by Win %</h2>
+                <div class="chart-container">
+                    <canvas id="teamRankingsChart"></canvas>
+                </div>
+            </div>
+            <div class="card">
+                <h2>Top 10 Assist Leaders</h2>
+                <div class="chart-container">
+                    <canvas id="topAssistsChart"></canvas>
+                </div>
+            </div>
+            <div class="card">
+                <h2>Conference Win % Snapshot</h2>
+                <div class="chart-container">
+                    <canvas id="conferenceWinChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Comparisons Section -->
+        <div class="comparison-section">
+            <!-- Source Comparison -->
+            <div class="comparison-card">
+                <h2>Compare Data Sources</h2>
+                <p style="color: #94a3b8; margin-bottom: 1rem; font-size: 0.9rem;">Compare NBA API vs Basketball Reference data for any player or team</p>
+
+                <div class="input-group">
+                    <input type="text" id="compare-source-input" placeholder="Enter player or team name..." />
+                    <select id="compare-source-type">
+                        <option value="player">Player</option>
+                        <option value="team">Team</option>
+                    </select>
+                    <button id="compare-source-btn" onclick="fetchSourceComparison()">Compare</button>
+                </div>
+
+                <div id="source-comparison-result"></div>
+            </div>
+
+            <!-- Player vs Player Comparison -->
+            <div class="comparison-card">
+                <h2>Player vs Player Comparison</h2>
+                <p style="color: #94a3b8; margin-bottom: 1rem; font-size: 0.9rem;">Head-to-head stats comparison between two players</p>
+
+                <div class="input-group">
+                    <input type="text" id="player1-input" placeholder="Enter first player..." />
+                    <input type="text" id="player2-input" placeholder="Enter second player..." />
+                    <button id="compare-players-btn" onclick="fetchPlayerComparison()">Compare Players</button>
+                    <button id="swap-players-btn" onclick="swapPlayers()" style="background: rgba(148, 163, 184, 0.35);">Swap</button>
+                </div>
+
+                <!-- New: Toggle for advanced stats -->
+                <div style="margin-bottom: 1rem;">
+                    <button id="advanced-stats-toggle" onclick="toggleAdvancedStats(this)" style="background: rgba(96, 165, 250, 0.5); padding: 0.5rem 1rem; font-size: 0.85rem;">
+                        📊 Show Advanced Stats
+                    </button>
+                    <button onclick="toggleStatsHelp()" style="background: rgba(147, 197, 253, 0.3); padding: 0.5rem 1rem; font-size: 0.85rem; margin-left: 0.5rem;">
+                        ❓ What's This?
+                    </button>
+                </div>
+
+                <!-- Help box (hidden by default) -->
+                <div id="stats-help-box" style="display: none; background: rgba(59, 130, 246, 0.1); border: 1px solid rgba(96, 165, 250, 0.3); border-radius: 8px; padding: 1.5rem; margin-bottom: 1.5rem;">
+                    <h4 style="color: #93c5fd; margin-bottom: 1rem;">Advanced Stats Guide</h4>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem; font-size: 0.9rem;">
+                        <div>
+                            <strong style="color: #60a5fa;">PER</strong>
+                            <p style="color: #cbd5e1;">Player Efficiency Rating - overall player efficiency per 100 possessions (15+ is excellent)</p>
+                        </div>
+                        <div>
+                            <strong style="color: #60a5fa;">TS%</strong>
+                            <p style="color: #cbd5e1;">True Shooting % - shooting efficiency including FGs, 3s, and FTs (>57% is excellent)</p>
+                        </div>
+                        <div>
+                            <strong style="color: #60a5fa;">AST%</strong>
+                            <p style="color: #cbd5e1;">Assist % - % of teammate FGs player assisted while on court</p>
+                        </div>
+                        <div>
+                            <strong style="color: #60a5fa;">STL%</strong>
+                            <p style="color: #cbd5e1;">Steal % - steals per 100 defensive possessions</p>
+                        </div>
+                        <div>
+                            <strong style="color: #60a5fa;">BLK%</strong>
+                            <p style="color: #cbd5e1;">Block % - blocks per 100 opponent 2-pt attempts</p>
+                        </div>
+                        <div>
+                            <strong style="color: #60a5fa;">USG%</strong>
+                            <p style="color: #cbd5e1;">Usage % - % of team possessions used by player (higher for primary scorers)</p>
+                        </div>
+                        <div>
+                            <strong style="color: #60a5fa;">WS</strong>
+                            <p style="color: #cbd5e1;">Win Shares - estimated wins contributed by player</p>
+                        </div>
+                        <div>
+                            <strong style="color: #60a5fa;">BPM</strong>
+                            <p style="color: #cbd5e1;">Box Plus/Minus - +/- per 100 possessions (adjusted for team)</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="player-comparison-result"></div>
+            </div>
+        </div>
+    </div>
+
     <!-- Static fallback data; BEGIN/END markers let build scripts swap it out -->
     <!-- BEGIN_STATIC_DATA -->
     <script>
         // Top 10 scorers
-        window.__TOP_PLAYERS__ = [{"PLAYER":"Luka Don\u010di\u0107","TEAM":"LAL","PTS":2143},{"PLAYER":"Shai Gilgeous-Alexander","TEAM":"OKC","PTS":2117},{"PLAYER":"Jaylen Brown","TEAM":"BOS","PTS":2015},{"PLAYER":"Kevin Durant","TEAM":"HOU","PTS":1993},{"PLAYER":"Donovan Mitchell","TEAM":"CLE","PTS":1952},{"PLAYER":"Tyrese Maxey","TEAM":"PHI","PTS":1927},{"PLAYER":"Jamal Murray","TEAM":"DEN","PTS":1905},{"PLAYER":"Jalen Brunson","TEAM":"NYK","PTS":1898},{"PLAYER":"Kawhi Leonard","TEAM":"LAC","PTS":1789},{"PLAYER":"Nikola Joki\u0107","TEAM":"DEN","PTS":1776}];
+        window.__TOP_PLAYERS__ = [{ "PLAYER": "Luka Dončić", "TEAM": "LAL", "PTS": 2143 }, { "PLAYER": "Shai Gilgeous-Alexander", "TEAM": "OKC", "PTS": 2117 }, { "PLAYER": "Jaylen Brown", "TEAM": "BOS", "PTS": 2015 }, { "PLAYER": "Kevin Durant", "TEAM": "HOU", "PTS": 1993 }, { "PLAYER": "Donovan Mitchell", "TEAM": "CLE", "PTS": 1952 }, { "PLAYER": "Tyrese Maxey", "TEAM": "PHI", "PTS": 1927 }, { "PLAYER": "Jamal Murray", "TEAM": "DEN", "PTS": 1905 }, { "PLAYER": "Jalen Brunson", "TEAM": "NYK", "PTS": 1898 }, { "PLAYER": "Kawhi Leonard", "TEAM": "LAC", "PTS": 1789 }, { "PLAYER": "Nikola Jokić", "TEAM": "DEN", "PTS": 1776 }];
         // League standings
-        window.__TEAM_RANKINGS__ = [{"TeamName":"Pistons","Conference":"East","PlayoffRank":1,"WINS":58,"LOSSES":22,"WinPCT":0.725},{"TeamName":"Thunder","Conference":"West","PlayoffRank":1,"WINS":64,"LOSSES":16,"WinPCT":0.8},{"TeamName":"Spurs","Conference":"West","PlayoffRank":2,"WINS":61,"LOSSES":19,"WinPCT":0.763},{"TeamName":"Celtics","Conference":"East","PlayoffRank":2,"WINS":54,"LOSSES":26,"WinPCT":0.675},{"TeamName":"Knicks","Conference":"East","PlayoffRank":3,"WINS":52,"LOSSES":28,"WinPCT":0.65},{"TeamName":"Nuggets","Conference":"West","PlayoffRank":3,"WINS":52,"LOSSES":28,"WinPCT":0.65},{"TeamName":"Lakers","Conference":"West","PlayoffRank":4,"WINS":51,"LOSSES":29,"WinPCT":0.638},{"TeamName":"Cavaliers","Conference":"East","PlayoffRank":4,"WINS":51,"LOSSES":29,"WinPCT":0.638},{"TeamName":"Raptors","Conference":"East","PlayoffRank":5,"WINS":45,"LOSSES":35,"WinPCT":0.563},{"TeamName":"Rockets","Conference":"West","PlayoffRank":5,"WINS":51,"LOSSES":29,"WinPCT":0.638},{"TeamName":"Timberwolves","Conference":"West","PlayoffRank":6,"WINS":47,"LOSSES":33,"WinPCT":0.588},{"TeamName":"Hawks","Conference":"East","PlayoffRank":6,"WINS":45,"LOSSES":35,"WinPCT":0.563},{"TeamName":"Suns","Conference":"West","PlayoffRank":7,"WINS":44,"LOSSES":36,"WinPCT":0.55},{"TeamName":"Magic","Conference":"East","PlayoffRank":7,"WINS":44,"LOSSES":36,"WinPCT":0.55},{"TeamName":"76ers","Conference":"East","PlayoffRank":8,"WINS":43,"LOSSES":37,"WinPCT":0.538},{"TeamName":"Clippers","Conference":"West","PlayoffRank":8,"WINS":41,"LOSSES":39,"WinPCT":0.513},{"TeamName":"Hornets","Conference":"East","PlayoffRank":9,"WINS":43,"LOSSES":37,"WinPCT":0.538},{"TeamName":"Trail Blazers","Conference":"West","PlayoffRank":9,"WINS":40,"LOSSES":40,"WinPCT":0.5},{"TeamName":"Heat","Conference":"East","PlayoffRank":10,"WINS":41,"LOSSES":39,"WinPCT":0.513},{"TeamName":"Warriors","Conference":"West","PlayoffRank":10,"WINS":37,"LOSSES":43,"WinPCT":0.463},{"TeamName":"Bucks","Conference":"East","PlayoffRank":11,"WINS":31,"LOSSES":49,"WinPCT":0.388},{"TeamName":"Pelicans","Conference":"West","PlayoffRank":11,"WINS":26,"LOSSES":54,"WinPCT":0.325},{"TeamName":"Grizzlies","Conference":"West","PlayoffRank":12,"WINS":25,"LOSSES":55,"WinPCT":0.313},{"TeamName":"Bulls","Conference":"East","PlayoffRank":12,"WINS":31,"LOSSES":49,"WinPCT":0.388},{"TeamName":"Nets","Conference":"East","PlayoffRank":13,"WINS":20,"LOSSES":60,"WinPCT":0.25},{"TeamName":"Mavericks","Conference":"West","PlayoffRank":13,"WINS":25,"LOSSES":55,"WinPCT":0.313},{"TeamName":"Kings","Conference":"West","PlayoffRank":14,"WINS":21,"LOSSES":59,"WinPCT":0.263},{"TeamName":"Pacers","Conference":"East","PlayoffRank":14,"WINS":19,"LOSSES":61,"WinPCT":0.238},{"TeamName":"Wizards","Conference":"East","PlayoffRank":15,"WINS":17,"LOSSES":63,"WinPCT":0.213},{"TeamName":"Jazz","Conference":"West","PlayoffRank":15,"WINS":21,"LOSSES":59,"WinPCT":0.263}];
+        window.__TEAM_RANKINGS__ = [{ "TeamName": "Pistons", "Conference": "East", "PlayoffRank": 1, "WINS": 58, "LOSSES": 22, "WinPCT": 0.725 }, { "TeamName": "Thunder", "Conference": "West", "PlayoffRank": 1, "WINS": 64, "LOSSES": 16, "WinPCT": 0.8 }, { "TeamName": "Spurs", "Conference": "West", "PlayoffRank": 2, "WINS": 61, "LOSSES": 19, "WinPCT": 0.763 }, { "TeamName": "Celtics", "Conference": "East", "PlayoffRank": 2, "WINS": 54, "LOSSES": 26, "WinPCT": 0.675 }, { "TeamName": "Knicks", "Conference": "East", "PlayoffRank": 3, "WINS": 52, "LOSSES": 28, "WinPCT": 0.65 }, { "TeamName": "Nuggets", "Conference": "West", "PlayoffRank": 3, "WINS": 52, "LOSSES": 28, "WinPCT": 0.65 }, { "TeamName": "Lakers", "Conference": "West", "PlayoffRank": 4, "WINS": 51, "LOSSES": 29, "WinPCT": 0.638 }, { "TeamName": "Cavaliers", "Conference": "East", "PlayoffRank": 4, "WINS": 51, "LOSSES": 29, "WinPCT": 0.638 }, { "TeamName": "Raptors", "Conference": "East", "PlayoffRank": 5, "WINS": 45, "LOSSES": 35, "WinPCT": 0.563 }, { "TeamName": "Rockets", "Conference": "West", "PlayoffRank": 5, "WINS": 51, "LOSSES": 29, "WinPCT": 0.638 }, { "TeamName": "Timberwolves", "Conference": "West", "PlayoffRank": 6, "WINS": 47, "LOSSES": 33, "WinPCT": 0.588 }, { "TeamName": "Hawks", "Conference": "East", "PlayoffRank": 6, "WINS": 45, "LOSSES": 35, "WinPCT": 0.563 }, { "TeamName": "Suns", "Conference": "West", "PlayoffRank": 7, "WINS": 44, "LOSSES": 36, "WinPCT": 0.55 }, { "TeamName": "Magic", "Conference": "East", "PlayoffRank": 7, "WINS": 44, "LOSSES": 36, "WinPCT": 0.55 }, { "TeamName": "76ers", "Conference": "East", "PlayoffRank": 8, "WINS": 43, "LOSSES": 37, "WinPCT": 0.538 }, { "TeamName": "Clippers", "Conference": "West", "PlayoffRank": 8, "WINS": 41, "LOSSES": 39, "WinPCT": 0.513 }, { "TeamName": "Hornets", "Conference": "East", "PlayoffRank": 9, "WINS": 43, "LOSSES": 37, "WinPCT": 0.538 }, { "TeamName": "Trail Blazers", "Conference": "West", "PlayoffRank": 9, "WINS": 40, "LOSSES": 40, "WinPCT": 0.5 }, { "TeamName": "Heat", "Conference": "East", "PlayoffRank": 10, "WINS": 41, "LOSSES": 39, "WinPCT": 0.513 }, { "TeamName": "Warriors", "Conference": "West", "PlayoffRank": 10, "WINS": 37, "LOSSES": 43, "WinPCT": 0.463 }, { "TeamName": "Bucks", "Conference": "East", "PlayoffRank": 11, "WINS": 31, "LOSSES": 49, "WinPCT": 0.388 }, { "TeamName": "Pelicans", "Conference": "West", "PlayoffRank": 11, "WINS": 26, "LOSSES": 54, "WinPCT": 0.325 }, { "TeamName": "Grizzlies", "Conference": "West", "PlayoffRank": 12, "WINS": 25, "LOSSES": 55, "WinPCT": 0.313 }, { "TeamName": "Bulls", "Conference": "East", "PlayoffRank": 12, "WINS": 31, "LOSSES": 49, "WinPCT": 0.388 }, { "TeamName": "Nets", "Conference": "East", "PlayoffRank": 13, "WINS": 20, "LOSSES": 60, "WinPCT": 0.25 }, { "TeamName": "Mavericks", "Conference": "West", "PlayoffRank": 13, "WINS": 25, "LOSSES": 55, "WinPCT": 0.313 }, { "TeamName": "Kings", "Conference": "West", "PlayoffRank": 14, "WINS": 21, "LOSSES": 59, "WinPCT": 0.263 }, { "TeamName": "Pacers", "Conference": "East", "PlayoffRank": 14, "WINS": 19, "LOSSES": 61, "WinPCT": 0.238 }, { "TeamName": "Wizards", "Conference": "East", "PlayoffRank": 15, "WINS": 17, "LOSSES": 63, "WinPCT": 0.213 }, { "TeamName": "Jazz", "Conference": "West", "PlayoffRank": 15, "WINS": 21, "LOSSES": 59, "WinPCT": 0.263 }];
     </script>
     <!-- END_STATIC_DATA -->
     <!-- Runtime data injection point -->
     <!-- DATA_INJECTION_POINT -->
     <!-- Renders the charts below -->
     <script src="charts.js"></script>
-</head>
-<body>
-    <h1>Basketball Stats Dashboard</h1>
-
-    <!-- Top scorers chart -->
-    <div>
-        <h2>Top Players</h2>
-        <canvas id="topPlayersChart"></canvas>
-    </div>
-
-    <!-- Standings chart -->
-    <div>
-        <h2>Team Rankings</h2>
-        <canvas id="teamRankingsChart"></canvas>
-    </div>
-
-    <!-- Source Comparison Section -->
-    <div id="source-comparison">
-        <h2>NBA API vs Basketball Reference</h2>
-        <input type="text" id="compare-source-input" placeholder="Enter player or team name" />
-        <select id="compare-source-type">
-            <option value="player">Player</option>
-            <option value="team">Team</option>
-        </select>
-        <button onclick="fetchSourceComparison()">Compare Sources</button>
-        <div id="source-comparison-result"></div>
-    </div>
-
-    <!-- Player Comparison Section -->
-    <div id="player-comparison">
-        <h2>Player vs Player Comparison</h2>
-
-        <input type="text" id="player1-input" placeholder="Enter first player" />
-        <input type="text" id="player2-input" placeholder="Enter second player" />
-
-        <button onclick="fetchPlayerComparison()">Compare Players</button>
-
-        <div id="player-comparison-result"></div>
-    </div>
 </body>
 </html>

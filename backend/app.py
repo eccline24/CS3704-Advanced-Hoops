@@ -1,4 +1,4 @@
-﻿import sys
+import sys
 import os
 
 # Allow importing from data/ directory
@@ -35,7 +35,8 @@ def static_files(filename):
 @app.route('/api/top-players')
 def top_players():
     try:
-        return jsonify(nba_service.get_top_players('PTS', limit=10))
+        stat = request.args.get('stat', 'PTS').upper()
+        return jsonify(nba_service.get_top_players(stat, limit=10))
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
@@ -157,6 +158,29 @@ def compare_players_cross(p1, p2):
         ]
     })
 
+@app.route('/api/player/<name>/advanced')
+def player_advanced_stats(name):
+    try:
+        return jsonify(nba_service.get_player_advanced_stats(name))
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/compare/players/<p1>/<p2>/advanced')
+def compare_players_advanced(p1, p2):
+    return jsonify({
+        "players": [
+            {
+                "name": p1,
+                "nba_api": nba_service.get_player_advanced_stats(p1),
+                "bbref": bbref_service.get_player_advanced_stats(p1)
+            },
+            {
+                "name": p2,
+                "nba_api": nba_service.get_player_advanced_stats(p2),
+                "bbref": bbref_service.get_player_advanced_stats(p2)
+            }
+        ]
+    })
 
 # ------------------------
 # Run server
