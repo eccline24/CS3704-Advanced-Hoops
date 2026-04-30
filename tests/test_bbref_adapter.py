@@ -57,28 +57,38 @@ class TestFindTeamEnum:
     def test_empty_string_returns_none(self, adapter):
         result = adapter._find_team_enum("")
         assert result is None
- 
+
+
+    def test_partial_name_returns_enum(self, adapter):
+        """Substring of a team's normalized name resolves via partial match."""
+        result = adapter._find_team_enum("golden state")
+        assert result == Team.GOLDEN_STATE_WARRIORS
+
+    def test_partial_city_name_returns_enum(self, adapter):
+        result = adapter._find_team_enum("boston")
+        assert result == Team.BOSTON_CELTICS
+
+    def test_exact_match_preferred_over_partial(self, adapter):
+        """Exact match wins even when another team's name contains the query as a substring."""
+        result = adapter._find_team_enum("los angeles lakers")
+        assert result == Team.LOS_ANGELES_LAKERS
+
     def test_mixed_case_returns_enum(self, adapter):
         """Mixed case like 'Los Angeles Lakers' should resolve correctly."""
         result = adapter._find_team_enum("Los Angeles Lakers")
         assert result == Team.LOS_ANGELES_LAKERS
- 
+
     def test_leading_trailing_whitespace_handled(self, adapter):
         """Extra whitespace around a valid team name should not break the lookup."""
         result = adapter._find_team_enum("  boston celtics  ")
         # Either resolves correctly or returns None — should not raise an exception
         assert result in (Team.BOSTON_CELTICS, None)
- 
+
     def test_numeric_string_returns_none(self, adapter):
         """A numeric string is not a valid team name."""
         result = adapter._find_team_enum("12345")
         assert result is None
- 
-    def test_partial_team_name_returns_none(self, adapter):
-        """A partial name like 'celtics' alone should not match."""
-        result = adapter._find_team_enum("celtics")
-        assert result is None
- 
+
     def test_all_valid_nba_teams_resolve(self, adapter):
         """Spot-check several teams to ensure broad coverage of the lookup logic."""
         teams_to_check = [
@@ -89,8 +99,9 @@ class TestFindTeamEnum:
         for name, expected in teams_to_check:
             result = adapter._find_team_enum(name)
             assert result == expected, f"Expected {expected} for '{name}', got {result}"
- 
- 
+
+
+
 # ---------------------------------------------------------------------------
 # get_player_stats
 # ---------------------------------------------------------------------------

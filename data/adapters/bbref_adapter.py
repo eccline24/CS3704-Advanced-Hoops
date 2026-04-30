@@ -13,20 +13,19 @@ class BBRefAdapter(BaseAdapter):
 
     def _find_team_enum(self, team_name: str):
         """Find matching team enum, handling various name formats"""
-        if not team_name:
+        if not team_name or not team_name.strip():
             return None
-        
+
         normalized_input = team_name.lower().strip()
-        
+
+        # Two-pass: exact match is preferred over partial match regardless of list order.
         for team in Team:
-            team_normalized = team.name.lower().replace('_', ' ')
-            
-            if team_normalized == normalized_input:
+            if team.name.lower().replace('_', ' ') == normalized_input:
                 return team
-            
-            if normalized_input in team_normalized or team_normalized in normalized_input:
+        for team in Team:
+            if normalized_input in team.name.lower().replace('_', ' '):
                 return team
-        
+
         return None
 
     def _standardize_player_stats(self, player_data: dict) -> list:
