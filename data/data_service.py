@@ -57,6 +57,9 @@ class DataService:
     def get_top_players(self, stat_category: str, limit: int = 10) -> list:
         return self.adapter.get_top_players(stat_category, limit)
 
+    def get_player_advanced_stats(self, player_name: str) -> dict:
+        return self.adapter.get_player_advanced_stats(player_name)
+
 
 # Quick manual test
 # Claude AI provided to ensure code works
