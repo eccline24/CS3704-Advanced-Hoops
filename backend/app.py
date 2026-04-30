@@ -92,6 +92,23 @@ def compare_teams():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+# Health check endpoint — returns server status and active data source
+@app.route('/api/health')
+def health():
+    return jsonify({
+        'status': 'ok',
+        'source': service.source,
+        'endpoints': [
+            '/api/top-players',
+            '/api/team-rankings',
+            '/api/player/<name>',
+            '/api/team/<name>',
+            '/api/compare/players',
+            '/api/compare/teams',
+            '/api/health'
+        ]
+    })
+
 
 # Run the dev server with auto-reload
 if __name__ == '__main__':
