@@ -141,6 +141,23 @@ def compare_sources_player(name):
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+# Health check endpoint — returns server status and active data source
+@app.route('/api/health')
+def health():
+    return jsonify({
+        'status': 'ok',
+        'source': service.source,
+        'endpoints': [
+            '/api/top-players',
+            '/api/team-rankings',
+            '/api/player/<name>',
+            '/api/team/<name>',
+            '/api/compare/players',
+            '/api/compare/teams',
+            '/api/health'
+        ]
+    })
+
 
 @app.route('/api/compare/sources/team/<name>')
 def compare_sources_team(name):
