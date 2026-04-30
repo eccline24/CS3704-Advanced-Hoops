@@ -1,5 +1,6 @@
 from adapters.nba_api_adapter import NBAApiAdapter
 from adapters.bbref_adapter import BBRefAdapter
+from cache import TTLCache, cached
 
 # Claude AI provided structure with functions and marked TODOs
 # prompt: can you give me a data service class outline in java with todos for each method. I want to use an adapter method for multiple data sources
@@ -21,25 +22,38 @@ class DataService:
             raise ValueError(f"Unknown source. Use 'nba_api' or 'bbref'.")
 
         self.source = source
+        self._cache = TTLCache()
+        self._cache_enabled = True
 
-    # All methods below simply delegate to whichever adapter was selected at init.
-    # This keeps DataService thin — it's a router, not a data processor.
+    def clear_cache(self) -> None:
+        self._cache.clear()
 
+    # All methods below delegate to whichever adapter was selected at init,
+    # wrapped in @cached so repeat calls with the same args skip the adapter
+    # entirely (and therefore skip the rate-limit sleeps inside NBAApiAdapter).
+    # TTLs reflect how often each dataset realistically changes.
+
+    @cached(ttl=86400)  # career stats — effectively static intra-day
     def get_player_stats(self, player_name: str) -> dict:
         return self.adapter.get_player_stats(player_name)
 
+    @cached(ttl=86400)  # roster — changes rarely mid-season
     def get_team_stats(self, team_name: str) -> dict:
         return self.adapter.get_team_stats(team_name)
 
+    @cached(ttl=3600)
     def get_player_comparison(self, player1: str, player2: str) -> dict:
         return self.adapter.get_player_comparison(player1, player2)
 
+    @cached(ttl=3600)
     def get_team_comparison(self, team1: str, team2: str) -> dict:
         return self.adapter.get_team_comparison(team1, team2)
 
+    @cached(ttl=3600)  # standings update after each game day
     def get_team_rankings(self) -> list:
         return self.adapter.get_team_rankings()
 
+    @cached(ttl=3600)  # leaderboards update after each game day
     def get_top_players(self, stat_category: str, limit: int = 10) -> list:
         return self.adapter.get_top_players(stat_category, limit)
 
