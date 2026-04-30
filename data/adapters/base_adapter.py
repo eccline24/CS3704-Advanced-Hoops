@@ -46,3 +46,8 @@ class BaseAdapter(ABC):
     def get_top_players(self, stat_category: str, limit: int = 10) -> list:
         """Fetch top players sorted by the given stat category."""
         pass
+
+    @abstractmethod
+    def get_player_advanced_stats(self, player_name: str) -> dict:
+        """Fetch advanced stats for a single player by name."""
+        pass
