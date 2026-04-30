@@ -213,3 +213,66 @@ class TestFlaskToAdapterIntegration:
         assert 'Stephen Curry' in result
         assert 'Celtics' in result
         assert result.count(SENTINEL_START) == 1
+
+
+# ===========================================================================
+# INTEGRATION 4
+# DataService caching — repeat calls hit the cache, not the adapter.
+# Verifies the @cached decorator wired in data_service.py correctly skips
+# the adapter on cache hits, which is what makes the dashboard reloads fast
+# and what prevents the NBA API rate-limit sleeps from firing twice.
+# ===========================================================================
+
+class TestDataServiceCaching:
+    def test_repeat_call_uses_cache(self):
+        from unittest.mock import patch, MagicMock
+        from data_service import DataService
+
+        with patch('data_service.NBAApiAdapter') as mock_adapter_cls:
+            mock_adapter = MagicMock()
+            mock_adapter.get_top_players.return_value = [
+                {'PLAYER': 'LeBron James', 'PTS': 30}
+            ]
+            mock_adapter_cls.return_value = mock_adapter
+
+            service = DataService(source='nba_api')
+
+            first = service.get_top_players('PTS', limit=10)
+            second = service.get_top_players('PTS', limit=10)
+
+            assert first == second
+            # Adapter hit exactly once despite two service calls
+            assert mock_adapter.get_top_players.call_count == 1
+
+    def test_distinct_args_skip_cache(self):
+        from unittest.mock import patch, MagicMock
+        from data_service import DataService
+
+        with patch('data_service.NBAApiAdapter') as mock_adapter_cls:
+            mock_adapter = MagicMock()
+            mock_adapter.get_top_players.side_effect = lambda stat, limit: [
+                {'stat': stat, 'limit': limit}
+            ]
+            mock_adapter_cls.return_value = mock_adapter
+
+            service = DataService(source='nba_api')
+            service.get_top_players('PTS', limit=10)
+            service.get_top_players('REB', limit=10)
+
+            assert mock_adapter.get_top_players.call_count == 2
+
+    def test_clear_cache_forces_adapter_call(self):
+        from unittest.mock import patch, MagicMock
+        from data_service import DataService
+
+        with patch('data_service.NBAApiAdapter') as mock_adapter_cls:
+            mock_adapter = MagicMock()
+            mock_adapter.get_team_rankings.return_value = [{'TeamName': 'Celtics'}]
+            mock_adapter_cls.return_value = mock_adapter
+
+            service = DataService(source='nba_api')
+            service.get_team_rankings()
+            service.clear_cache()
+            service.get_team_rankings()
+
+            assert mock_adapter.get_team_rankings.call_count == 2
